@@ -5,6 +5,7 @@ import asyncio
 import struct
 import time
 import json
+from datetime import datetime
 from config import apr_list
 
 
@@ -86,11 +87,21 @@ class Output(asyncio.Protocol):
 
     @staticmethod
     def process_callback(cmd):
-        dev = struct.unpack('<H', bytes(cmd[4:6]))[0]
-        print([hex(i) for i in cmd])
-        if cmd[6:8] != [0x03, 0x2c]:
+        """
+        ['0xfe', '0x11', '0x44', '0x5f', '0x7b', '0x0', '0x1', '0x3', '0xc',
+        '0x0', '0xe0',
+        '0x0', '0x7f',
+        '0x0', '0x20',
+        '0x0', '0x0',
+        '0x0', '0x0',
+        '0x0', '0x0',
+        '0xc0']
+        :param cmd:
+        :return:
+        """
+        if cmd[6:9] != [0x01, 0x03, 0x0c]:
             return
-        t, rh, pm25, co2, hcho, voc = struct.unpack('>hHHHHH', bytes(cmd[8:20]))
+        t, rh, pm25, co2, hcho, voc = struct.unpack('>hHHHHH', bytes(cmd[9:21]))
         t = round(t / 10, 1)
         rh = round(rh / 10, 1)
         data = {
@@ -102,5 +113,5 @@ class Output(asyncio.Protocol):
             'voc': str(voc),
         }
         with open('data_0201.log', 'a') as f:
-            f.write(json.dumps({str(datetime.fromtimestamp(time.time())): _data}))
+            f.write(json.dumps({str(datetime.fromtimestamp(time.time())): data}))
             f.write('\n')
